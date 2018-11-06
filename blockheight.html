@@ -17,10 +17,8 @@
         <h4>リアルタイム情報</h4>
         正規チェーン
         <p id="blockheight_1">読み込み中...</p><br />
-        不正チェーン
+        非正規チェーン
         <p id="blockheight_2">読み込み中...</p><br />
-        不正チェーンに追いつくまで
-        <p id="blockheight">新しいブロックを待っています...</p>
     </div>
 
     <script src="https://insight.bitzeny.jp/socket.io/socket.io.js"></script>
@@ -29,13 +27,13 @@
         fetch("https://insight.bitzeny.jp/api/status/").then(function (response) {
             return response.text();
         }).then(function (text) {
-            document.getElementById("blockheight_1").innerText = JSON.parse(text).info.blocks;
+            document.getElementById("blockheight_1").innerText = JSON.parse(text).info.blocks+" Block";
         });
 
         fetch("https://zeny.insight.monaco-ex.org/api/status").then(function (response) {
             return response.text();
         }).then(function (text) {
-            document.getElementById("blockheight_2").innerText = JSON.parse(text).info.blocks;
+            document.getElementById("blockheight_2").innerText = JSON.parse(text).info.blocks+" Block";
         });
 
         eventToListenTo = 'block';
@@ -51,12 +49,7 @@
             fetch("https://insight.bitzeny.jp/api/block/" + data + "/").then(function (response) {
                 return response.text();
             }).then(function (text) {
-                document.getElementById("blockheight_1").innerText = JSON.parse(text).height;
-
-                insight1 = Number(document.getElementById("blockheight_1").innerText);
-                insight2 = Number(document.getElementById("blockheight_2").innerText);
-
-                document.getElementById("blockheight").innerText = insight2 - insight1;
+                document.getElementById("blockheight_1").innerText = JSON.parse(text).height+" Block";
             });
         });
 
@@ -70,12 +63,7 @@
             fetch("https://zeny.insight.monaco-ex.org/api/block/" + data + "/").then(function (response) {
                 return response.text();
             }).then(function (text) {
-                document.getElementById("blockheight_2").innerText = JSON.parse(text).height;
-
-                insight1 = Number(document.getElementById("blockheight_1").innerText);
-                insight2 = Number(document.getElementById("blockheight_2").innerText);
-
-                document.getElementById("blockheight").innerText = insight2 - insight1;
+                document.getElementById("blockheight_2").innerText = JSON.parse(text).height+" Block";
             });
         });
     </script>
