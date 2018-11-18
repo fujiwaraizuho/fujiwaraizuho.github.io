@@ -1,71 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>BitZenyBlockHeight</title>
-    <style>
-        #center {
-            text-align: center;        
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>BitZenyBlockHeight</title>
+  <style>
+    .center {
+      text-align: center;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="center">
-        <h1>BitZeny BlockHeight CheckTool</h1>
-        <h4>リアルタイム情報</h4>
-        正規チェーン
-        <p id="blockheight_1">読み込み中...</p><br />
-        非正規チェーン
-        <p id="blockheight_2">読み込み中...</p><br />
-    </div>
+  <div class="center">
+    <h1>BitZeny BlockHeight CheckTool</h1>
+    <h4>リアルタイム情報</h4>
+    正規チェーン
+    <p id="blockheight_1">読み込み中...</p><br />
+    非正規チェーン
+    <p id="blockheight_2">読み込み中...</p><br />
+  </div>
 
-    <script src="https://insight.bitzeny.jp/socket.io/socket.io.js"></script>
-    <script>
-
-        fetch("https://insight.bitzeny.jp/api/status/").then(function (response) {
-            return response.text();
-        }).then(function (text) {
-            document.getElementById("blockheight_1").innerText = JSON.parse(text).info.blocks+" Block";
-        });
-
-        fetch("https://zeny.insight.monaco-ex.org/api/status").then(function (response) {
-            return response.text();
-        }).then(function (text) {
-            document.getElementById("blockheight_2").innerText = JSON.parse(text).info.blocks+" Block";
-        });
-
-        eventToListenTo = 'block';
-        room = 'inv';
-
-        let socket1 = io("https://insight.bitzeny.jp/");
-
-        socket1.on('connect', function() {
-            socket1.emit('subscribe', room);
-        });
-
-        socket1.on(eventToListenTo, function(data) {
-            fetch("https://insight.bitzeny.jp/api/block/" + data + "/").then(function (response) {
-                return response.text();
-            }).then(function (text) {
-                document.getElementById("blockheight_1").innerText = JSON.parse(text).height+" Block";
-            });
-        });
-
-        let socket2 = io("https://zeny.insight.monaco-ex.org/");
-
-        socket2.on('connect', function() {
-            socket2.emit('subscribe', room);
-        });
-
-        socket2.on(eventToListenTo, function(data) {
-            fetch("https://zeny.insight.monaco-ex.org/api/block/" + data + "/").then(function (response) {
-                return response.text();
-            }).then(function (text) {
-                document.getElementById("blockheight_2").innerText = JSON.parse(text).height+" Block";
-            });
-        });
-    </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js" integrity="sha256-0YA7ixx4+I4GrLichcjWSQHIUSQiI8ojTDqsK7AZ5zU=" crossorigin="anonymous"></script>
+  <script>
+    const eventToListenTo = "block";
+    const room = "inv";
+    const regular_chain_server_address = "https://insight.bitzeny.jp";
+    const non_regular_chain_server_address = "https://zeny.insight.monaco-ex.org";
+    const blockheight_1 = document.getElementById("blockheight_1");
+    const blockheight_2 = document.getElementById("blockheight_2");
+    fetch(`${regular_chain_server_address}/api/status`)
+      .then(res => res.json())
+      .then(({ info }) => {
+        blockheight_1.innerText = `${info.blocks} Block`;
+      });
+    const regular_chain_socket = io(regular_chain_server_address);
+    regular_chain_socket.on("connect", () =>
+      regular_chain_socket.emit("subscribe", room)
+    );
+    regular_chain_socket.on(eventToListenTo, block_id =>
+      fetch(`${regular_chain_server_address}/api/block/${block_id}`)
+        .then(res => res.json())
+        .then(({ height }) => {
+          blockheight_1.innerText = `${height} Block`;
+        })
+    );
+    fetch(`${non_regular_chain_server_address}/api/status`)
+      .then(res => res.json())
+      .then(({ info }) => {
+        blockheight_2.innerText = `${info.blocks} Block`;
+      });
+    const non_regular_chain_socket = io(non_regular_chain_server_address);
+    non_regular_chain_socket.on("connect", () => socket2.emit("subscribe", room));
+    non_regular_chain_socket.on(eventToListenTo, block_id =>
+      fetch(`${non_regular_chain_server_address}/api/block/${block_id}`)
+        .then(res => res.json())
+        .then(({ height }) => {
+          blockheight_2.innerText = `${height} Block`;
+        })
+    );
+  </script>
 </body>
+
 </html>
