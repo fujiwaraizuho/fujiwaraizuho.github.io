@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>トランザクション署名</title>
+
+    <script src="https://connect.trezor.io/7/trezor-connect.js"></script>
+    <script>
+        const TrezorConnect = window.TrezorConnect
+
+        TrezorConnect.manifest({
+            email: 'contact@zenyma.jp',
+            appUrl: 'https://zenyma.jp'
+        })
+
+        function trezorSignTx() {
+            const coinId = document.getElementById('coinId').value
+            
+            const adminXpub = document.getElementById('adminXpub').value
+            const buyerXpub = document.getElementById('buyerXpub').value
+            const sellerXpub = document.getElementById('sellerXpub').value
+
+            const adminIndexPath = parseInt(document.getElementById('adminIndexPath').value)
+
+            const input_data = JSON.parse(document.getElementById('inputJson').value)
+            const output_data = JSON.parse(document.getElementById('outputJson').value)
+
+            const inputs = []
+            const outputs = []
+
+            input_data.map(input => {
+                inputs.push({
+                    address_n: [(44 | 0x80000000) >>> 0, (22 | 0x80000000) >>> 0, (0 | 0x80000000) >>> 0, 0, adminIndexPath],
+                    prev_hash: input.txid,
+                    prev_index: input.index,
+                    script_type: 'SPENDADDRESS',
+                    multisig: {
+                        pubkeys: [
+                            {
+                                node: adminXpub,
+                                address_n: [0, adminIndexPath]
+                            },
+                            {
+                                node: buyerXpub,
+                                address_n: [0, 0]
+                            },
+                            {
+                                node: sellerXpub,
+                                address_n: [0, 0]
+                            }
+                        ],
+                        m: 2
+                    }
+                })
+            })
+
+            output_data.map(output => {
+                outputs.push({
+                    address: output.address,
+                    amount: output.amount,
+                    script_type: 'PAYTOADDRESS'
+                })
+            })
+
+            TrezorConnect.signTransaction({inputs: inputs, outputs: outputs, coin: coinId}).then(function (result) {
+                document.getElementById('result').innerHTML = JSON.stringify(result, undefined, 2)
+            })
+        }
+    </script>
+  </head>
+  <body>
+    <main>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-12">
+                    <div class="card mt-4">
+                        <div class="card-header">トランザクション署名</div>
+                        <div class="card-body">
+                            <form name="sign-transaction" id="sign-transaction-id" action="">
+                                <h5 class="pt-3">通貨情報</h5>
+                                <hr />
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="coinId" placeholder="coinId (mona, zny)" required>
+                                </div>
+                                <h5 class="pt-3">アドレス情報</h5>
+                                <hr />
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="adminXpub" placeholder="Admin XPUB" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="buyerXpub" placeholder="Buyer XPUB" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="sellerXpub" placeholder="Seller XPUB" required>
+                                </div>
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="inputGroupPrepend2">m/44'/coinId'/0'/0/</span>
+                                        </div>
+                                        <input type="number" class="form-control" id="adminIndexPath" placeholder="Sign Admin index path" aria-describedby="inputGroupPrepend2" required>
+                                    </div>
+                                </div>
+                                <h5 class="pt-3">トランザクション情報</h5>
+                                <hr />
+                                <div class="form-group">
+                                    <textarea class="form-control" id="inputJson" rows="3" placeholder="Transaction Input JSON" require></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <textarea class="form-control" id="outputJson" rows="3" placeholder="Transaction Output JSON" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <input class="btn btn-block btn-primary" onClick="trezorSignTx()" value="署名"></input>
+                                </div>           
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card mt-4 mb-4">
+                        <div class="card-header">結果</div>
+                        <div class="card-body">
+                            <pre id="result"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  </body>
+</html>
